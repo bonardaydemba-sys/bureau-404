@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BUREAU 404 — Escape Game Complet</title>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Share+Tech+Mono&family=Oswald:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0d0d;--panel:#16161f;--border:#2a2a3a;--gold:#c9963a;--gold2:#f0c060;--red:#c0392b;--green:#27ae60;--blue:#2980b9;--text:#d4c9a8;--text2:#8a8070;--locked:#1a1a28;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;min-height:100vh;overflow-x:hidden;}
+.scanlines{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.12) 2px,rgba(0,0,0,0.12) 4px);pointer-events:none;z-index:9999;}
+#audio-widget{position:fixed;bottom:1.5rem;right:1.5rem;z-index:500;display:flex;gap:0.5rem;align-items:center;background:rgba(13,13,13,0.92);border:1px solid var(--border);padding:0.5rem 1rem;}
+.audio-btn{background:transparent;border:none;color:var(--gold);font-size:1.2rem;cursor:pointer;font-family:'Share Tech Mono',monospace;}
+#vol-label{font-size:0.6rem;color:var(--text2);letter-spacing:2px;}
+#vol-slider{width:60px;accent-color:var(--gold);cursor:pointer;}
+
+/* INTRO */
+#intro{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;background:radial-gradient(ellipse at 50% 30%,#1a1a2e 0%,#0d0d0d 70%);}
+.glitch-title{font-family:'Oswald',sans-serif;font-size:clamp(3rem,10vw,7rem);font-weight:600;letter-spacing:8px;color:var(--gold);text-shadow:2px 0 var(--red),-2px 0 var(--blue);animation:glitch 3s infinite;line-height:1;margin-bottom:0.5rem;}
+@keyframes glitch{0%,90%,100%{text-shadow:2px 0 var(--red),-2px 0 var(--blue);}92%{text-shadow:-4px 0 var(--red),4px 0 var(--blue);transform:translateX(2px);}94%{text-shadow:4px 0 var(--red),-4px 0 var(--blue);transform:translateX(-2px);}96%{text-shadow:2px 0 var(--red),-2px 0 var(--blue);transform:translateX(0);}}
+.subtitle{font-size:0.7rem;letter-spacing:6px;color:var(--text2);margin-bottom:2rem;text-transform:uppercase;}
+.briefing{max-width:620px;background:rgba(201,150,58,0.05);border:1px solid rgba(201,150,58,0.2);padding:2rem;margin-bottom:1.5rem;text-align:left;position:relative;}
+.briefing::before{content:'DOSSIER CONFIDENTIEL — NIVEAU 11';position:absolute;top:-10px;left:20px;background:var(--bg);color:var(--red);font-size:0.58rem;letter-spacing:3px;padding:0 8px;}
+.briefing p{font-size:0.82rem;line-height:1.8;margin-bottom:0.75rem;}
+.briefing p:last-child{margin-bottom:0;}
+.highlight{color:var(--gold2);}
+.rooms-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;max-width:640px;margin-bottom:1.5rem;}
+.room-chip{background:var(--locked);border:1px solid var(--border);padding:0.6rem 0.3rem;text-align:center;font-size:0.58rem;letter-spacing:1px;color:var(--text2);}
+.room-chip span{font-size:1rem;display:block;margin-bottom:0.3rem;}
+.difficulty-bar{display:flex;gap:0.3rem;align-items:center;justify-content:center;margin-bottom:1.5rem;font-size:0.6rem;color:var(--text2);letter-spacing:2px;}
+.diff-dot{width:10px;height:10px;border-radius:50%;}
+.typing-text{font-size:0.8rem;color:var(--text2);margin-bottom:1rem;min-height:1.5rem;}
+.btn-start{font-family:'Oswald',sans-serif;font-size:1.2rem;letter-spacing:5px;background:transparent;border:2px solid var(--gold);color:var(--gold);padding:1rem 3rem;cursor:pointer;transition:all 0.3s;position:relative;overflow:hidden;}
+.btn-start::before{content:'';position:absolute;inset:0;background:var(--gold);transform:scaleX(0);transform-origin:left;transition:transform 0.3s;z-index:-1;}
+.btn-start:hover{color:var(--bg);}
+.btn-start:hover::before{transform:scaleX(1);}
+
+/* HUD */
+#hud{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(13,13,13,0.97);border-bottom:1px solid var(--border);padding:0.5rem 1.5rem;display:none;align-items:center;justify-content:space-between;gap:0.5rem;flex-wrap:wrap;}
+.hud-brand{font-family:'Oswald',sans-serif;font-size:0.85rem;letter-spacing:4px;color:var(--gold);}
+.hud-rooms{display:flex;gap:0.25rem;}
+.hud-room{width:24px;height:24px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.6rem;color:var(--text2);transition:all 0.3s;}
+.hud-room.done{background:rgba(39,174,96,0.2);border-color:var(--green);color:var(--green);}
+.hud-room.current{background:rgba(201,150,58,0.2);border-color:var(--gold);color:var(--gold);animation:pulseborder 1.5s infinite;}
+@keyframes pulseborder{0%,100%{box-shadow:0 0 4px var(--gold);}50%{box-shadow:0 0 12px var(--gold);}}
+.hud-timer{font-size:0.9rem;color:var(--red);letter-spacing:2px;}
+.hud-codes{font-size:0.68rem;color:var(--text2);}
+.hud-codes b{color:var(--gold2);}
+.hud-diff{font-size:0.6rem;color:var(--text2);}
+
+/* GAME */
+#game{display:none;min-height:100vh;padding:5rem 1rem 3rem;max-width:980px;margin:0 auto;}
+.room{display:none;animation:fadeRoom 0.6s ease;}
+.room.active{display:block;}
+@keyframes fadeRoom{from{opacity:0;transform:translateY(15px);}to{opacity:1;transform:translateY(0);}}
+.room-header{display:flex;align-items:flex-start;gap:1.5rem;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);}
+.room-num{font-family:'Oswald',sans-serif;font-size:4rem;color:var(--gold);opacity:0.2;line-height:1;min-width:70px;text-align:center;}
+.room-tag{font-size:0.6rem;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:0.3rem;}
+.room-title{font-family:'Oswald',sans-serif;font-size:1.6rem;letter-spacing:2px;color:white;margin-bottom:0.3rem;}
+.room-desc{font-size:0.76rem;line-height:1.7;color:var(--text2);}
+.diff-badge{display:inline-block;padding:2px 8px;font-size:0.6rem;letter-spacing:2px;margin-bottom:0.4rem;border:1px solid;}
+.diff-1{border-color:#27ae60;color:#27ae60;}
+.diff-2{border-color:#f39c12;color:#f39c12;}
+.diff-3{border-color:#e67e22;color:#e67e22;}
+.diff-4{border-color:#e74c3c;color:#e74c3c;}
+.diff-5{border-color:#8e44ad;color:#8e44ad;}
+
+.room-layout{display:grid;grid-template-columns:1fr 320px;gap:1.5rem;align-items:start;}
+@media(max-width:680px){.room-layout{grid-template-columns:1fr;}}
+
+/* INDICES */
+.clue-area{display:flex;flex-direction:column;gap:0.8rem;}
+.clue-envelope{background:var(--panel);border:1px solid var(--border);overflow:hidden;}
+.clue-tab{background:var(--locked);padding:0.55rem 1.1rem;font-size:0.62rem;letter-spacing:3px;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all 0.2s;user-select:none;}
+.clue-tab:hover,.clue-tab.open{background:rgba(201,150,58,0.1);color:var(--gold);}
+.clue-tab .arrow{transition:transform 0.3s;}
+.clue-tab.open .arrow{transform:rotate(90deg);}
+.clue-content{display:none;padding:1.2rem;border-top:1px solid var(--border);}
+.clue-content.open{display:block;}
+
+.doc-paper{background:#f5f0e0;color:#2a1f0e;padding:1.2rem;font-family:'Special Elite',cursive;font-size:0.78rem;line-height:1.9;position:relative;box-shadow:2px 2px 8px rgba(0,0,0,0.4);}
+.doc-paper::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(transparent,transparent 30px,rgba(0,0,0,0.04) 30px,rgba(0,0,0,0.04) 31px);pointer-events:none;}
+.doc-title{font-size:0.85rem;font-weight:bold;text-align:center;border-bottom:1px solid #8a7040;padding-bottom:0.5rem;margin-bottom:0.75rem;letter-spacing:2px;}
+.stamp{display:inline-block;border:2px solid var(--red);color:var(--red);padding:2px 8px;font-size:0.58rem;letter-spacing:2px;transform:rotate(-4deg);margin-top:0.5rem;}
+.key-word{color:#8b0000;font-weight:bold;text-decoration:underline;}
+.postit{background:#fef08a;color:#1a1000;padding:1rem;font-family:'Special Elite',cursive;font-size:0.78rem;line-height:1.7;box-shadow:3px 3px 6px rgba(0,0,0,0.3);transform:rotate(1.5deg);position:relative;}
+.postit::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:40px;height:8px;background:rgba(0,0,0,0.12);}
+.postit .key-word{color:#8b0000;}
+.postit-blue{background:#d4eaf7;color:#0a1f2e;transform:rotate(-1deg);}
+.terminal{background:#001a00;border:1px solid #00ff41;padding:1rem;font-size:0.72rem;color:#00ff41;line-height:1.9;}
+.t-prompt{color:#00cc33;}.t-key{color:#ffff00;}.t-val{color:#00ffcc;}.t-warn{color:#ff6600;}
+.memo{background:#1a1a2e;border:1px solid var(--blue);padding:1.2rem;font-size:0.76rem;line-height:1.8;color:var(--text);}
+.memo-title{font-family:'Oswald',sans-serif;font-size:0.85rem;letter-spacing:2px;color:var(--blue);margin-bottom:0.75rem;}
+
+/* CADENAS */
+.lock-panel{background:var(--panel);border:1px solid var(--border);padding:1.5rem;position:sticky;top:5rem;}
+.lock-title{font-family:'Oswald',sans-serif;font-size:1rem;letter-spacing:3px;color:var(--gold);margin-bottom:0.5rem;}
+.lock-hint{font-size:0.66rem;color:var(--text2);margin-bottom:1.2rem;line-height:1.6;}
+.lock-visual{text-align:center;font-size:3rem;margin-bottom:1rem;}
+@keyframes unlock-bounce{0%{transform:scale(1);}50%{transform:scale(1.3) rotate(10deg);}100%{transform:scale(1);}}
+.code-label{font-size:0.6rem;letter-spacing:2px;color:var(--text2);margin-bottom:0.4rem;display:block;}
+.code-digits{display:flex;gap:0.35rem;justify-content:center;margin-bottom:0.7rem;}
+.digit-box{width:40px;height:50px;background:var(--bg);border:2px solid var(--border);color:var(--gold2);font-family:'Oswald',sans-serif;font-size:1.4rem;text-align:center;outline:none;transition:all 0.2s;text-transform:uppercase;}
+.digit-box:focus{border-color:var(--gold);box-shadow:0 0 8px rgba(201,150,58,0.3);}
+.digit-box.correct-digit{border-color:var(--green);background:rgba(39,174,96,0.1);color:var(--green);}
+.digit-box.wrong-digit{border-color:var(--red);background:rgba(192,57,43,0.1);animation:shake 0.3s;}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-5px);}75%{transform:translateX(5px);}}
+.text-code-input{width:100%;background:var(--bg);border:2px solid var(--border);color:var(--gold2);font-family:'Share Tech Mono',monospace;font-size:0.88rem;padding:0.7rem 1rem;outline:none;text-transform:uppercase;letter-spacing:2px;transition:all 0.2s;margin-bottom:0.7rem;}
+.text-code-input:focus{border-color:var(--gold);}
+.btn-unlock{width:100%;background:transparent;border:2px solid var(--gold);color:var(--gold);font-family:'Oswald',sans-serif;font-size:0.95rem;letter-spacing:3px;padding:0.7rem;cursor:pointer;transition:all 0.2s;}
+.btn-unlock:hover{background:var(--gold);color:var(--bg);}
+.lock-feedback{margin-top:0.7rem;padding:0.7rem;font-size:0.72rem;line-height:1.5;display:none;border-left:3px solid;}
+.lock-feedback.show{display:block;}
+.lock-feedback.ok{border-color:var(--green);background:rgba(39,174,96,0.08);color:var(--green);}
+.lock-feedback.ko{border-color:var(--red);background:rgba(192,57,43,0.08);color:var(--text);}
+.attempts-display{display:flex;gap:0.3rem;margin-bottom:0.7rem;justify-content:center;}
+.attempt-dot{width:8px;height:8px;border-radius:50%;background:var(--red);transition:all 0.3s;}
+.attempt-dot.used{background:var(--border);}
+.btn-next-room{display:none;width:100%;margin-top:0.8rem;background:var(--green);border:none;color:white;font-family:'Oswald',sans-serif;font-size:0.95rem;letter-spacing:3px;padding:0.85rem;cursor:pointer;transition:all 0.2s;}
+.btn-next-room:hover{background:#2ecc71;}
+.btn-next-room.show{display:block;}
+
+/* WIN */
+#win{display:none;min-height:100vh;background:radial-gradient(ellipse at center,#0d2818 0%,var(--bg) 70%);align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:2rem;}
+#win.show{display:flex;}
+.win-seal{font-size:5rem;margin-bottom:1.5rem;animation:sealin 1s ease;}
+@keyframes sealin{from{transform:scale(0) rotate(-180deg);opacity:0;}to{transform:scale(1) rotate(0);opacity:1;}}
+.win-title{font-family:'Oswald',sans-serif;font-size:clamp(2.5rem,7vw,5rem);letter-spacing:6px;color:var(--green);margin-bottom:0.5rem;}
+.win-sub{font-size:0.8rem;color:var(--text2);letter-spacing:2px;margin-bottom:2rem;}
+.codes-board{background:var(--panel);border:1px solid var(--green);padding:1.5rem;margin-bottom:2rem;max-width:500px;width:100%;}
+.codes-board-title{font-size:0.6rem;letter-spacing:3px;color:var(--green);margin-bottom:1rem;}
+.code-row{display:flex;justify-content:space-between;padding:0.35rem 0;border-bottom:1px solid var(--border);font-size:0.75rem;}
+.code-row:last-child{border-bottom:none;}
+.cr-name{color:var(--text2);}
+.cr-val{color:var(--gold2);font-family:'Oswald',sans-serif;letter-spacing:2px;}
+.win-stats{display:flex;gap:1.5rem;margin-bottom:2rem;flex-wrap:wrap;justify-content:center;}
+.win-stat{background:var(--panel);border:1px solid var(--border);padding:1rem 1.5rem;min-width:90px;}
+.win-stat-val{font-family:'Oswald',sans-serif;font-size:2rem;color:var(--gold);display:block;}
+.win-stat-lbl{font-size:0.58rem;color:var(--text2);letter-spacing:2px;text-transform:uppercase;}
+.btn-restart{font-family:'Oswald',sans-serif;font-size:1.1rem;letter-spacing:4px;background:var(--green);border:none;color:white;padding:1rem 2.5rem;cursor:pointer;transition:all 0.2s;}
+.btn-restart:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(39,174,96,0.4);}
+
+#toast{position:fixed;bottom:5rem;left:50%;transform:translateX(-50%) translateY(20px);background:var(--panel);border:1px solid var(--gold);color:var(--gold);padding:0.7rem 1.5rem;font-size:0.78rem;letter-spacing:2px;opacity:0;transition:all 0.4s;pointer-events:none;z-index:400;white-space:nowrap;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+<div id="toast"></div>
+
+<div id="audio-widget">
+  <span id="vol-label">AMBIANCE</span>
+  <button class="audio-btn" id="mute-btn" onclick="toggleMute()">🔊</button>
+  <input type="range" id="vol-slider" min="0" max="1" step="0.05" value="0.4" oninput="setVolume(this.value)">
+</div>
+
+<!-- INTRO -->
+<div id="intro">
+  <div class="glitch-title">BUREAU 404</div>
+  <div class="subtitle">escape game — 11 salles — ~45 minutes</div>
+  <div class="briefing">
+    <p>📁 <span class="highlight">SITUATION :</span> Le directeur M. Fontaine a verrouillé l'accès à toute l'entreprise avant de disparaître. <span class="highlight">11 salles</span> sont condamnées, chacune gardée par un cadenas.</p>
+    <p>🔐 <span class="highlight">OBJECTIF :</span> Trouvez les codes cachés dans les documents de formation — courrier, classement, accueil, structure d'entreprise, communication, formules de politesse, archivage numérique — pour tout déverrouiller.</p>
+    <p>⚠️ <span class="highlight">RÈGLE :</span> Les réponses ne sont jamais données directement. Vous avez <span class="highlight">3 tentatives</span> par cadenas. La difficulté augmente à chaque salle.</p>
+  </div>
+  <div class="difficulty-bar">
+    <div class="diff-dot" style="background:#27ae60"></div> FACILE
+    <span style="margin:0 0.5rem">→</span>
+    <div class="diff-dot" style="background:#f39c12"></div> MOYEN
+    <span style="margin:0 0.5rem">→</span>
+    <div class="diff-dot" style="background:#e74c3c"></div> DIFFICILE
+    <span style="margin:0 0.5rem">→</span>
+    <div class="diff-dot" style="background:#8e44ad"></div> BOSS
+  </div>
+  <div class="rooms-grid">
+    <div class="room-chip"><span>📬</span>Courrier entrant</div>
+    <div class="room-chip"><span>📋</span>Classement</div>
+    <div class="room-chip"><span>📞</span>Accueil tél.</div>
+    <div class="room-chip"><span>✈️</span>Déplacements</div>
+    <div class="room-chip"><span>🏢</span>Objectifs</div>
+    <div class="room-chip"><span>🗂️</span>Structure</div>
+    <div class="room-chip"><span>💬</span>Communication</div>
+    <div class="room-chip"><span>✉️</span>Formules politesse</div>
+    <div class="room-chip"><span>🔧</span>Rôle admin/accueil</div>
+    <div class="room-chip"><span>🗃️</span>Arborescence</div>
+    <div class="room-chip"><span>🔱</span>Boss Final</div>
+    <div class="room-chip" style="opacity:0.2"><span>—</span></div>
+  </div>
+  <div class="typing-text" id="typing-text"></div>
+  <div style="margin:1.2rem 0;text-align:center;">
+    <label style="font-size:0.7rem;letter-spacing:3px;color:var(--text2);display:block;margin-bottom:0.5rem;">▸ IDENTIFIANT AGENT</label>
+    <input id="player-name" type="text" placeholder="Votre prénom et nom..." maxlength="40"
+      style="background:var(--panel);border:1px solid var(--gold);color:var(--gold);font-family:'Special Elite',cursive;font-size:1rem;padding:0.6rem 1.2rem;width:280px;text-align:center;outline:none;letter-spacing:1px;">
+  </div>
+  <button class="btn-start" onclick="startGame()">▶ ENTRER DANS LE BUREAU</button>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="hud-brand">🔐 BUREAU 404</div>
+  <div class="hud-rooms" id="hud-rooms"></div>
+  <div class="hud-codes">Codes : <b id="hud-codes-count">0</b>/11</div>
+  <div class="hud-timer" id="hud-timer">⏱ 00:00</div>
+</div>
+
+<div id="game"></div>
+
+<!-- WIN -->
+<div id="win">
+  <div class="win-seal">🏆</div>
+  <div class="win-title">BUREAU LIBÉRÉ</div>
+  <div class="win-sub">LES 8 SALLES ONT ÉTÉ DÉVERROUILLÉES</div>
+  <div class="codes-board">
+    <div class="codes-board-title">▸ CODES DÉCOUVERTS</div>
+    <div id="win-codes-list"></div>
+  </div>
+  <div class="win-stats">
+    <div class="win-stat"><span class="win-stat-val" id="ws-time">0:00</span><span class="win-stat-lbl">Temps</span></div>
+    <div class="win-stat"><span class="win-stat-val" id="ws-tries">0</span><span class="win-stat-lbl">Tentatives</span></div>
+    <div class="win-stat"><span class="win-stat-val" id="ws-score">0</span><span class="win-stat-lbl">Score</span></div>
+  </div>
+  <button class="btn-restart" onclick="location.reload()">↺ REJOUER</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  MOTEUR AUDIO — DARK AMBIENT MÉLODIQUE
+//  Nappes synthétiques + mélodies inquiétantes
+// ══════════════════════════════════════════════════
+let audioCtx=null, masterGain=null, isMuted=false, masterVolume=0.4;
+let ambTimers=[], ambNodes=[];
+
+function initAudio(){
+  audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  masterGain=audioCtx.createGain();
+  masterGain.gain.value=masterVolume;
+  masterGain.connect(audioCtx.destination);
+  startRoomAmbiance(0);
+}
+
+function stopAmbiance(){
+  ambTimers.forEach(t=>clearTimeout(t)); ambTimers=[];
+  ambNodes.forEach(n=>{try{
+    if(n.gain){n.gain.setTargetAtTime(0,audioCtx.currentTime,0.3);}
+    setTimeout(()=>{try{n.stop&&n.stop();}catch(e){}},600);
+  }catch(e){}});
+  ambNodes=[];
+}
+
+function startRoomAmbiance(idx){
+  if(!audioCtx)return;
+  stopAmbiance();
+  [r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11][idx]&&[r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11][idx]();
+}
+
+// ── Utilitaires synthé ──────────────────────────
+function makeReverb(dur){
+  const sr=audioCtx.sampleRate,len=sr*dur,buf=audioCtx.createBuffer(2,len,sr);
+  for(let c=0;c<2;c++){const d=buf.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2);}
+  const conv=audioCtx.createConvolver(); conv.buffer=buf;
+  const g=audioCtx.createGain(); g.gain.value=0.3; conv.connect(g); return g;
+}
+function makePad(freq,vol,cutoff,det){
+  const g=audioCtx.createGain(); g.gain.value=0;
+  const f=audioCtx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=cutoff||700;
+  const rev=makeReverb(2.5); f.connect(g); g.connect(rev); rev.connect(masterGain);
+  [0,det||6,-(det||6)].forEach(d=>{
+    const o=audioCtx.createOscillator(); o.type='sawtooth'; o.frequency.value=freq; o.detune.value=d;
+    o.connect(f); o.start(); ambNodes.push(o);
+  });
+  g.gain.setTargetAtTime(vol,audioCtx.currentTime,1.8); ambNodes.push(g); return g;
+}
+function makeSinePad(freq,vol){
+  const g=audioCtx.createGain(); g.gain.value=0;
+  const f=audioCtx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=600;
+  [freq,freq*2.003].forEach(fr=>{
+    const o=audioCtx.createOscillator(); o.type='sine'; o.frequency.value=fr;
+    o.connect(f); o.start(); ambNodes.push(o);
+  });
+  f.connect(g); g.connect(masterGain);
+  g.gain.setTargetAtTime(vol,audioCtx.currentTime,2); ambNodes.push(g);
+}
+function makeBass(freq,vol,rate){
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  const lfo=audioCtx.createOscillator(),lg=audioCtx.createGain();
+  o.type='triangle'; o.frequency.value=freq; lfo.type='sine'; lfo.frequency.value=rate||0.4;
+  lg.gain.value=vol*0.35; lfo.connect(lg); lg.connect(g.gain); g.gain.value=vol;
+  const f=audioCtx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=180;
+  o.connect(f); f.connect(g); g.connect(masterGain); o.start(); lfo.start(); ambNodes.push(o,lfo,g);
+}
+function makeVibPad(freq,vol,rate){
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  const lfo=audioCtx.createOscillator(),lg=audioCtx.createGain();
+  o.type='triangle'; o.frequency.value=freq; lfo.frequency.value=rate||3; lg.gain.value=freq*0.012;
+  lfo.connect(lg); lg.connect(o.frequency);
+  const f=audioCtx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=600;
+  g.gain.value=0; o.connect(f); f.connect(g); g.connect(masterGain);
+  o.start(); lfo.start(); ambNodes.push(o,lfo,g);
+  g.gain.setTargetAtTime(vol,audioCtx.currentTime,2.5);
+}
+function makeWind(vol){
+  const bs=audioCtx.sampleRate*4,buf=audioCtx.createBuffer(1,bs,audioCtx.sampleRate),d=buf.getChannelData(0);
+  let last=0; for(let i=0;i<bs;i++){const w=Math.random()*2-1;d[i]=(last+0.02*w)/1.02;last=d[i];}
+  const s=audioCtx.createBufferSource(); s.buffer=buf; s.loop=true;
+  const f=audioCtx.createBiquadFilter(); f.type='bandpass'; f.frequency.value=120; f.Q.value=0.3;
+  const lfo=audioCtx.createOscillator(),lg=audioCtx.createGain();
+  lfo.frequency.value=0.12; lg.gain.value=50; lfo.connect(lg); lg.connect(f.frequency);
+  const g=audioCtx.createGain(); g.gain.value=vol;
+  s.connect(f); f.connect(g); g.connect(masterGain); s.start(); lfo.start(); ambNodes.push(s,lfo);
+}
+function scheduleBell(freq,vol,interval){
+  function ring(){
+    if(isMuted||!audioCtx){ambTimers.push(setTimeout(ring,interval));return;}
+    [freq,freq*2.756].forEach((fr,i)=>{
+      const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+      o.type='sine'; o.frequency.value=fr;
+      g.gain.setValueAtTime(vol*(i?0.4:1),audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+(i?2.5:4));
+      o.connect(g); g.connect(masterGain); o.start(); o.stop(audioCtx.currentTime+(i?3:5));
+    });
+    ambTimers.push(setTimeout(ring,interval+Math.random()*interval*0.3));
+  }
+  ambTimers.push(setTimeout(ring,2000+Math.random()*3000));
+}
+function playNote(freq,vol,dur,type,delay){
+  const t=setTimeout(()=>{
+    if(isMuted||!audioCtx)return;
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    const rev=makeReverb(1.2); o.type=type||'sine'; o.frequency.value=freq;
+    g.gain.setValueAtTime(0,audioCtx.currentTime);
+    g.gain.linearRampToValueAtTime(vol,audioCtx.currentTime+0.06);
+    g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+dur);
+    o.connect(g); g.connect(rev); rev.connect(masterGain); o.start(); o.stop(audioCtx.currentTime+dur+0.1);
+  },delay||0);
+  ambTimers.push(t);
+}
+function loopMelody(notes,bpm,vol,type,offset){
+  const step=60000/bpm;
+  function play(i){
+    const n=notes[i%notes.length];
+    if(n>0)playNote(n,vol,step*0.85/1000,type||'sine',0);
+    ambTimers.push(setTimeout(()=>play(i+1),step));
+  }
+  ambTimers.push(setTimeout(()=>play(0),offset||0));
+}
+
+// ═══════════════════════════════════════════
+//  AMBIANCES PAR SALLE — progressivement sombres
+// ═══════════════════════════════════════════
+
+// S1 — Calme, bureau. La mineur doux, clochettes légères
+function r1(){
+  makeSinePad(110,0.055); makeSinePad(165,0.035); makeSinePad(220,0.025);
+  scheduleBell(880,0.07,15000);
+  loopMelody([220,261,329,440,329,261,220,0,0,0],52,0.038,'sine',2500);
+}
+// S2 — Mystère léger. Ré mineur + arpège montant
+function r2(){
+  makeSinePad(110,0.065); makeSinePad(130,0.04); makeBass(55,0.045,0.3);
+  scheduleBell(659,0.08,12000);
+  loopMelody([293,247,220,196,220,247,0,0],48,0.042,'triangle',1800);
+}
+// S3 — Tension. Nappes + mélodie chromatique
+function r3(){
+  makePad(110,0.05,500,8); makeVibPad(165,0.038,2.5); makeBass(55,0.05,0.4); makeWind(0.018);
+  scheduleBell(440,0.09,9500);
+  loopMelody([311,294,277,261,247,261,277,0,0],44,0.048,'triangle',1200);
+}
+// S4 — Inquiétant. 7ème diminuée + basse pulsée
+function r4(){
+  makePad(98,0.055,420,10); makePad(116,0.038,370,12); makeVibPad(155,0.032,3);
+  makeBass(49,0.055,0.5); makeWind(0.025);
+  scheduleBell(370,0.09,8000);
+  loopMelody([277,261,247,233,220,0,220,233,0,0,0],40,0.052,'sawtooth',900);
+}
+// S5 — Oppressant. Cluster + nappes froides
+function r5(){
+  makePad(87,0.06,360,12); makePad(104,0.042,310,14); makeVibPad(130,0.038,3.5);
+  makeBass(43,0.06,0.6); makeWind(0.03);
+  scheduleBell(311,0.1,7000);
+  loopMelody([207,196,185,175,185,196,0,0,175,0,0],38,0.056,'sawtooth',700);
+}
+// S6 — Très sombre. Battement entre notes proches + mélodie qui plonge
+function r6(){
+  makePad(82,0.065,310,5); makePad(84,0.048,290,5); makeVibPad(110,0.042,4);
+  makeBass(41,0.065,0.7); makeWind(0.036);
+  scheduleBell(277,0.11,6000);
+  loopMelody([196,185,175,165,155,165,0,155,0,0,0,0],36,0.06,'sawtooth',500);
+  loopMelody([82,0,0,84,0,0,82,0,0,0],36,0.038,'triangle',2000);
+}
+// S7 — Angoisse. Arpèges désaccordés + contrechant grave
+function r7(){
+  makePad(73,0.07,260,6); makePad(77,0.052,240,6); makeVibPad(98,0.046,4.5);
+  makeBass(36,0.07,0.8); makeWind(0.042);
+  scheduleBell(233,0.12,5000);
+  loopMelody([185,175,165,156,147,156,165,0,0,147,0,0,0],34,0.065,'sawtooth',300);
+  loopMelody([73,0,0,77,0,0,73,0,0,0,0],34,0.038,'triangle',1900);
+}
+// S8 — Cauchemar. Dissonances majeures + deux voix qui divergent
+function r8(){
+  makePad(65,0.075,230,7); makePad(69,0.056,210,7); makeVibPad(87,0.05,5);
+  makeBass(32,0.075,0.9); makeWind(0.05);
+  scheduleBell(196,0.13,4200);
+  loopMelody([175,165,156,147,139,131,139,147,0,0,0,131,0,0],32,0.07,'sawtooth',0);
+  loopMelody([65,0,0,0,69,0,0,0,65,0,0,0],32,0.046,'triangle',1400);
+}
+// S9 — Terreur. Tout se décompose, voix qui s'effondrent
+function r9(){
+  makePad(58,0.08,210,8); makePad(62,0.06,190,8); makePad(69,0.042,165,18);
+  makeVibPad(77,0.055,5.5); makeBass(29,0.08,1.0); makeWind(0.058);
+  scheduleBell(164,0.14,3500);
+  loopMelody([165,156,147,139,131,123,131,139,0,123,0,0,0,0],30,0.075,'sawtooth',0);
+  loopMelody([58,0,0,62,0,0,58,0,0,0,0],30,0.052,'triangle',1100);
+}
+// S10 — Abîme. Tout descend, tout ralentit, le temps se dilate
+function r10(){
+  makePad(49,0.085,190,9); makePad(52,0.065,168,9); makePad(58,0.046,145,20);
+  makeVibPad(65,0.06,6); makeBass(24,0.085,1.1); makeWind(0.065);
+  scheduleBell(138,0.15,3000);
+  loopMelody([156,147,139,131,123,116,123,131,0,0,116,0,0,0,0],28,0.08,'sawtooth',0);
+  loopMelody([49,0,0,0,52,0,0,0,49,0,0,0,0],28,0.056,'triangle',700);
+  loopMelody([0,0,0,0,0,0,82,0,0,0,0,0,0,0,0],28,0.036,'sine',3500);
+}
+// S11 — BOSS. Solennel, grave, cinématique. Un motif à 4 notes qui revient inexorablement.
+// Rien à voir avec les salles précédentes — silence pesant, puis la cloche.
+function r11(){
+  // Sub-bass quasi imperceptible — juste une présence physique
+  makeSinePad(27.5,0.055);
+  makeSinePad(32.7,0.038);
+  // Nappe haute avec battement lent — deux notes très proches
+  makeVibPad(220,0.028,1.8);
+  makeVibPad(233,0.016,2.1);
+  // Vent lointain discret
+  makeWind(0.03);
+  // Cloche funèbre espacée — toutes les 6 secondes
+  scheduleBell(55,0.2,6000);
+  // Motif principal : 4 notes solennelles, très lentes (La-Sol#-Mi-Fa#)
+  loopMelody([220,0,0,0,0,0,0,0,207,0,0,0,0,0,0,0,164,0,0,0,0,0,0,0,174,0,0,0,0,0,0,0],18,0.1,'triangle',1500);
+  // Écho une octave en dessous, décalé de 5 secondes
+  loopMelody([0,0,0,0,110,0,0,0,0,0,0,0,103,0,0,0,0,0,0,0,82,0,0,0,0,0,0,0,87,0,0,0,0,0,0,0,0,0,0,0],18,0.05,'sine',5500);
+  // Une seule note aiguë, seule, toutes les 32 temps — comme une alarme lointaine
+  loopMelody([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,440],18,0.032,'sine',12000);
+}
+
+// ── SFX ─────────────────────────────────────────
+function playSfxClick(){if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='square';o.frequency.setValueAtTime(800,audioCtx.currentTime);o.frequency.exponentialRampToValueAtTime(400,audioCtx.currentTime+0.05);g.gain.setValueAtTime(0.15,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+0.1);o.connect(g);g.connect(masterGain);o.start();o.stop(audioCtx.currentTime+0.1);}
+function playSfxUnlock(){if(!audioCtx)return;[0,100,200,350].forEach((d,i)=>{const n=[523,659,784,1047];setTimeout(()=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='triangle';o.frequency.value=n[i];g.gain.setValueAtTime(0.2,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+0.4);o.connect(g);g.connect(masterGain);o.start();o.stop(audioCtx.currentTime+0.4);},d);});}
+function playSfxError(){if(!audioCtx)return;[0,150].forEach(d=>{setTimeout(()=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sawtooth';o.frequency.value=180;g.gain.setValueAtTime(0.2,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+0.25);o.connect(g);g.connect(masterGain);o.start();o.stop(audioCtx.currentTime+0.25);},d);});}
+function playSfxPageTurn(){if(!audioCtx)return;const bs=audioCtx.sampleRate*0.15,buf=audioCtx.createBuffer(1,bs,audioCtx.sampleRate),d=buf.getChannelData(0);for(let i=0;i<bs;i++)d[i]=(Math.random()*2-1)*Math.sin(Math.PI*i/bs)*0.5;const s=audioCtx.createBufferSource();s.buffer=buf;const f=audioCtx.createBiquadFilter();f.type='bandpass';f.frequency.value=5000;f.Q.value=0.3;const g=audioCtx.createGain();g.gain.value=0.3;s.connect(f);f.connect(g);g.connect(masterGain);s.start();}
+function playSfxKeyboard(){if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='square';o.frequency.value=1200+Math.random()*400;g.gain.setValueAtTime(0.08,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+0.04);o.connect(g);g.connect(masterGain);o.start();o.stop(audioCtx.currentTime+0.04);}
+function playSfxWin(){if(!audioCtx)return;stopAmbiance();const mel=[523,659,784,1047,784,1047,1319],dur=[0.15,0.15,0.15,0.3,0.15,0.15,0.5];let t=audioCtx.currentTime;mel.forEach((f,i)=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(0.25,t);g.gain.exponentialRampToValueAtTime(0.0001,t+dur[i]);o.connect(g);g.connect(masterGain);o.start(t);o.stop(t+dur[i]);t+=dur[i]+0.02;});}
+function toggleMute(){isMuted=!isMuted;if(masterGain)masterGain.gain.value=isMuted?0:masterVolume;document.getElementById('mute-btn').textContent=isMuted?'🔇':'🔊';}
+function setVolume(v){masterVolume=parseFloat(v);if(masterGain&&!isMuted)masterGain.gain.value=masterVolume;}
+
+
+// ══ DONNÉES — 8 SALLES ══
+const ROOMS = [
+
+// ════ SALLE 1 — FACILE ════
+{
+  id:1, diff:1, diffLabel:"FACILE",
+  tag:"📬 Salle 1 — Archives Courrier",
+  title:"Le Bureau de la Secrétaire",
+  desc:"La secrétaire a verrouillé son tiroir. Un mot sur la porte : « Le code = numéros des étapes Réception, Numérisation, Identification, Archivage dans le circuit officiel. »",
+  lockType:"digits", lockLength:4, lockCode:"1426",
+  lockLabel:"CODE À 4 CHIFFRES",
+  lockHint:"Lisez la Note de Service pour trouver le numéro de chaque étape. Puis assemblez-les dans l'ordre indiqué sur le post-it.",
+  codesLabel:"1426",
+  clues:[
+    {tab:"📄 NOTE DE SERVICE — Circuit courrier entrant", content:`<div class="doc-paper">
+      <div class="doc-title">NOTE DE SERVICE N°22 — CIRCUIT COURRIER ENTRANT</div>
+      <p>Les <strong>6 étapes numérotées</strong> du traitement du courrier entrant :</p><br>
+      <p><span class="key-word">Étape 1 — Réception</span> : prise en charge physique du courrier.</p>
+      <p><span class="key-word">Étape 2 — Identification</span> : tri et catégorisation de chaque pli.</p>
+      <p><span class="key-word">Étape 3 — Enregistrement</span> : saisie dans le registre.</p>
+      <p><span class="key-word">Étape 4 — Numérisation</span> : scan de tous les documents reçus.</p>
+      <p><span class="key-word">Étape 5 — Diffusion</span> : acheminement vers le bon destinataire.</p>
+      <p><span class="key-word">Étape 6 — Archivage</span> : conservation selon les durées légales.</p>
+      <div class="stamp">CONFIDENTIEL</div></div>`},
+    {tab:"🗒️ POST-IT — Ordre du code", content:`<div class="postit">
+      Le code du tiroir utilise 4 étapes,<br>dans <u>cet ordre précis</u> :<br><br>
+      <strong class="key-word">Réception</strong> puis <strong class="key-word">Numérisation</strong><br>
+      puis <strong class="key-word">Identification</strong> puis <strong class="key-word">Archivage</strong><br><br>
+      → Cherche le numéro de chaque étape<br>dans la Note de Service !<br><br>
+      <em>Ne pas perdre ce post-it !</em></div>`},
+    {tab:"💻 TERMINAL — Vérification", content:`<div class="terminal">
+      <div class="t-prompt">> circuit_courrier.dat</div><br>
+      <div class="t-line"><span class="t-key">ETAPE_1</span>=<span class="t-val">"Reception"</span></div>
+      <div class="t-line"><span class="t-key">ETAPE_2</span>=<span class="t-val">"Identification"</span></div>
+      <div class="t-line"><span class="t-key">ETAPE_3</span>=<span class="t-val">"Enregistrement"</span></div>
+      <div class="t-line"><span class="t-key">ETAPE_4</span>=<span class="t-val">"Numerisation"</span></div>
+      <div class="t-line"><span class="t-key">ETAPE_5</span>=<span class="t-val">"Diffusion"</span></div>
+      <div class="t-line"><span class="t-key">ETAPE_6</span>=<span class="t-val">"Archivage"</span></div><br>
+      <div class="t-warn">> FORMAT : [n°Recept°]+[n°Numer°]+[n°Identif°]+[n°Archiv°]</div>
+      <div class="t-warn">> Numérisation n'est PAS l'étape 3...</div></div>`}
+  ]
+},
+
+// ════ SALLE 2 — FACILE/MOYEN ════
+{
+  id:2, diff:2, diffLabel:"FACILE+",
+  tag:"📋 Salle 2 — Armoire des Archives",
+  title:"L'Armoire Mystère",
+  desc:"Serrure gravée : « 5 méthodes gardent ce secret. Leur initiale, dans le bon ordre d'usage, forme le mot de passe. »",
+  lockType:"word", lockCode:"ANTCA",
+  lockLabel:"MOT DE PASSE (5 LETTRES)",
+  lockHint:"Post-it 1 = l'ordre des méthodes par description. Post-it 2 = les noms à identifier. Croisez les deux.",
+  codesLabel:"ANTCA",
+  clues:[
+    {tab:"🗒️ POST-IT 1 — Ordre d'usage", content:`<div class="postit">
+      <strong>Ordre au bureau (+ utilisée → - utilisée) :</strong><br><br>
+      <strong>1ère :</strong> On range par <u>nom de personne ou d'entreprise</u>. La plus intuitive pour retrouver un dossier client.<br><br>
+      <strong>2ème :</strong> On attribue un <u>numéro unique</u>. Personne ne devine le contenu rien qu'avec le titre.<br><br>
+      <strong>3ème :</strong> On regroupe par <u>service ou domaine</u> (RH, Compta, Marketing).<br><br>
+      <strong>4ème :</strong> On classe dans <u>l'ordre des dates</u>. Idéal pour courriers et factures.<br><br>
+      <strong>5ème :</strong> On combine <u>lettres ET chiffres</u> dans la référence (ex: RH-001).<br><br>
+      <em>→ Trouve le nom exact de chaque méthode dans le Post-it 2 !</em></div>`},
+    {tab:"🗒️ POST-IT 2 — Les 5 méthodes (désordre)", content:`<div class="postit postit-blue">
+      <strong>Mémo des 5 méthodes officielles :</strong><br><em>(dans le désordre — à replacer !)</em><br><br>
+      ◆ <strong class="key-word">A</strong>LPHANUMÉRIQUE → lettres + chiffres (MK-012)<br><br>
+      ◆ <strong class="key-word">N</strong>UMÉRIQUE → numéro séquentiel seul (001, 002...)<br><br>
+      ◆ <strong class="key-word">T</strong>HÉMATIQUE → par sujet ou domaine d'activité<br><br>
+      ◆ <strong class="key-word">C</strong>HRONOLOGIQUE → par ordre de date<br><br>
+      ◆ <strong class="key-word">A</strong>LPHABÉTIQUE → par ordre des lettres (noms)<br><br>
+      <em>→ Retrouve l'ordre dans le Post-it 1 !</em></div>`},
+    {tab:"💻 TERMINAL — Journal des accès", content:`<div class="terminal">
+      <div class="t-prompt">> armoire_B4.log — 5 entrées</div><br>
+      <div class="t-line"><span class="t-key">POS_1</span> → dossier <span class="t-val">"Dupont / Martin / Leroy"</span></div>
+      <div class="t-line"><span class="t-key">POS_2</span> → dossier <span class="t-val">"Dossier_0047"</span> (contenu masqué)</div>
+      <div class="t-line"><span class="t-key">POS_3</span> → dossier <span class="t-val">"Recrutement / Formation"</span></div>
+      <div class="t-line"><span class="t-key">POS_4</span> → dossier <span class="t-val">"Factures_Janv_Fev_Mars"</span></div>
+      <div class="t-line"><span class="t-key">POS_5</span> → dossier <span class="t-val">"RH-2024-Contrats"</span></div><br>
+      <div class="t-warn">> Quelle méthode correspond à chaque dossier ?</div>
+      <div class="t-warn">> Initiale de chaque méthode = une lettre du code</div></div>`}
+  ]
+},
+
+// ════ SALLE 3 — MOYEN ════
+{
+  id:3, diff:2, diffLabel:"MOYEN",
+  tag:"📞 Salle 3 — Standard Téléphonique",
+  title:"Le Standard Silencieux",
+  desc:"Une voix enregistrée répète : « Quatre gestes font un vrai professionnel. Reconstituez-les dans l'ordre — leur initiale déverrouille ce poste. »",
+  lockType:"word", lockCode:"CROC",
+  lockLabel:"CODE 4 LETTRES",
+  lockHint:"Aucun document ne donne la réponse directement. Le rapport d'incident révèle l'ordre, le terminal donne les noms tronqués, le post-it donne les mots-clés.",
+  codesLabel:"CROC",
+  clues:[
+    {tab:"📋 RAPPORT D'INCIDENT — Appel raté", content:`<div class="doc-paper">
+      <div class="doc-title">RAPPORT D'INCIDENT REF. 2024-03-07</div>
+      <p>4 fautes commises dans l'ordre chronologique de l'appel :</p><br>
+      <p><strong>Faute n°1 :</strong> L'agent a posé une question sans dire son nom ni celui de la société. Le client ne savait pas à qui il parlait.</p><br>
+      <p><strong>Faute n°2 :</strong> L'agent a parlé sans laisser le client expliquer pourquoi il appelait. Le vrai motif de l'appel n'a jamais été identifié.</p><br>
+      <p><strong>Faute n°3 :</strong> Face à une demande complexe, l'agent a dit « je ne sais pas » sans proposer de transfert ni de prise en charge.</p><br>
+      <p><strong>Faute n°4 :</strong> L'agent a raccroché brusquement sans résumer ni confirmer la suite — et sans attendre que le client raccroche.</p><br>
+      <p style="font-size:0.72rem;color:#555;font-style:italic;">Chaque faute = une étape non respectée. Trouvez le nom exact dans les autres documents.</p></div>`},
+    {tab:"🗒️ POST-IT — Mots-clés du formateur", content:`<div class="postit">
+      Mots clés du protocole (désordre) :<br><br>
+      ★ <strong>Raccrocher en dernier</strong> → étape de fermeture<br>
+      ★ <strong>Se nommer, nommer la société</strong> → étape d'ouverture<br>
+      ★ <strong>Transférer / rappeler / message</strong> → étape de traitement<br>
+      ★ <strong>Laisser parler, comprendre le besoin</strong> → étape d'écoute<br><br>
+      — chaque étape porte un nom en 1 mot —<br>
+      — ces initiales dans l'ordre de l'appel = le code —<br><br>
+      <em>L'ordre → rapport d'incident.</em><br>
+      <em>Les noms exacts → terminal.</em></div>`},
+    {tab:"💻 TERMINAL — Base protocoles", content:`<div class="terminal">
+      <div class="t-prompt">> protocoles_accueil.db — 4 étapes trouvées</div><br>
+      <div class="t-line"><span class="t-key">NOM_A</span>=<span class="t-val">"O________"</span> → traitement, action</div>
+      <div class="t-line"><span class="t-key">NOM_B</span>=<span class="t-val">"C_________"</span> → fermeture, reformulation</div>
+      <div class="t-line"><span class="t-key">NOM_C</span>=<span class="t-val">"C_______"</span> → ouverture, identité</div>
+      <div class="t-line"><span class="t-key">NOM_D</span>=<span class="t-val">"R_____"</span> → motif, écoute active</div><br>
+      <div class="t-warn">> ⚠ CES ÉTAPES SONT DANS LE DÉSORDRE.</div>
+      <div class="t-warn">> Référez-vous au rapport d'incident pour l'ordre.</div>
+      <div class="t-warn">> Initiales dans le bon ordre = le code.</div></div>`}
+  ]
+},
+
+// ════ SALLE 4 — DIFFICILE ════
+{
+  id:4, diff:3, diffLabel:"DIFFICILE",
+  tag:"✈️ Salle 4 — Bureau de la Direction",
+  title:"Le Coffre du Directeur",
+  desc:"Coffre à 4 chiffres. Aucune instruction visible. Un carnet, un mail froissé et un terminal crypté sont à votre disposition.",
+  lockType:"digits", lockLength:4, lockCode:"7354",
+  lockLabel:"CODE À 4 CHIFFRES",
+  lockHint:"Chaque document révèle 1 ou 2 chiffres — jamais dans l'ordre final. Croisez les 3 sources.",
+  codesLabel:"7354",
+  clues:[
+    {tab:"📓 CARNET — Notes du directeur", content:`<div class="doc-paper">
+      <div class="doc-title">CARNET PERSONNEL — M. FONTAINE</div>
+      <p>J'organise mes voyages selon la méthode <strong>CQQCOQP</strong>.</p>
+      <p>L'ordre des 7 questions suit l'acronyme lettre par lettre :<br>
+      <strong>C</strong>omment — <strong>Q</strong>ui — <strong>Q</strong>uoi — <strong>C</strong>ombien — <strong>O</strong>ù — <strong>Q</strong>uand — <strong>P</strong>ourquoi</p><br>
+      <p>Mon code coffre est lié à cette méthode :</p>
+      <p>→ <strong>1er chiffre</strong> : nombre total de questions dans CQQCOQP.</p>
+      <p>→ <strong>3ème chiffre</strong> : rang de la question <em>« Où ? »</em> dans l'acronyme ci-dessus.</p><br>
+      <p style="font-size:0.72rem;color:#555;font-style:italic;">Les 2ème et 4ème chiffres ne sont pas dans ce carnet.</p>
+      <div class="stamp">USAGE PERSONNEL</div></div>`},
+    {tab:"📧 MAIL IMPRIMÉ — Confirmation voyage", content:`<div class="doc-paper">
+      <div class="doc-title">EMAIL — CONFIRMATION RÉSERVATION LYON</div>
+      <p><strong>De :</strong> agence-voyages@travel-pro.fr<br>
+      <strong>À :</strong> m.fontaine@bureau404.fr</p><br>
+      <p>• Train Paris→Lyon : départ <strong>08h12</strong><br>
+      • Hôtel Ibis Lyon Centre — <strong>3</strong> étoiles — chambre <strong>214</strong><br>
+      • Durée du séjour : <strong>2</strong> nuits<br>
+      • Voyageurs : <strong>1</strong> — Voiture <strong>4</strong>, siège <strong>37</strong></p><br>
+      <p style="font-family:'Special Elite';font-size:0.9rem;color:#8b0000;transform:rotate(-1deg);display:inline-block;">
+      "2ème chiffre = nb de nuits + 1"</p><br>
+      <p style="font-size:0.72rem;color:#555;font-style:italic;">Le 4ème chiffre n'est pas dans ce mail. Cherchez dans le terminal.</p></div>`},
+    {tab:"💻 TERMINAL — Dossier chiffré", content:`<div class="terminal">
+      <div class="t-prompt">> coffre_direction.enc — CORROMPU</div><br>
+      <div class="t-line">chiffre_1 = total questions CQQCOQP</div>
+      <div class="t-line">chiffre_2 = [voir mail imprimé]</div>
+      <div class="t-line">chiffre_3 = rang lettre 'O' dans CQQCOQP</div>
+      <div class="t-line">chiffre_4 = rang question <span class="t-warn">"C______N"</span> dans CQQCOQP</div><br>
+      <div class="t-warn">> "C______N" → désigne une somme d'argent allouée</div>
+      <div class="t-warn">> Retrouvez ce mot dans le carnet (ordre CQQCOQP)</div></div>`}
+  ]
+},
+
+// ════ SALLE 5 — MOYEN/DIFFICILE ════
+{
+  id:5, diff:3, diffLabel:"DIFFICILE",
+  tag:"🏢 Salle 5 — Salle de Réunion",
+  title:"Le Tableau Stratégique",
+  desc:"La porte de la salle de réunion est verrouillée. Au tableau effacé à moitié, on lit : « Les 4 piliers qui guident toute entreprise — leurs initiales dans l'ordre du document forment le code. »",
+  lockType:"word", lockCode:"MSID",
+  lockLabel:"MOT DE PASSE (4 LETTRES)",
+  lockHint:"Trouvez les 4 grands objectifs d'une entreprise dans les documents. Prenez leur initiale dans l'ordre où ils apparaissent.",
+  codesLabel:"MSID",
+  clues:[
+    {tab:"📄 RAPPORT STRATÉGIQUE — Objectifs", content:`<div class="doc-paper">
+      <div class="doc-title">RAPPORT STRATÉGIQUE ANNUEL — CONFIDENTIEL</div>
+      <p>Notre entreprise se fixe <strong>4 objectifs fondamentaux</strong> qui guident toutes nos décisions. Dans l'ordre de priorité stratégique :</p><br>
+      <p><strong>Objectif A :</strong> Faire plus de recettes que de dépenses. Sans cela, l'entreprise ne survit pas. C'est comme le jardinier qui doit vendre ses légumes plus cher qu'il ne les produit.</p><br>
+      <p><strong>Objectif B :</strong> S'assurer que les clients sont heureux de ce qu'ils achètent. Un client satisfait revient et en parle en bien autour de lui.</p><br>
+      <p><strong>Objectif C :</strong> Toujours chercher à créer de nouvelles choses ou de meilleures façons de faire. Inventer un meilleur outil pour rester en avance sur les concurrents.</p><br>
+      <p><strong>Objectif D :</strong> Agir de manière responsable pour que l'activité ne nuise pas à la planète ni aux gens. Penser à comment on travaillera dans 10 ou 20 ans.</p><br>
+      <p style="font-size:0.72rem;color:#555;font-style:italic;">⚠ Les noms officiels de ces objectifs ne sont pas donnés ici. Cherchez dans les autres documents.</p>
+      <div class="stamp">STRATÉGIQUE</div></div>`},
+    {tab:"🗒️ POST-IT — Vocabulaire RH", content:`<div class="postit">
+      Termes officiels entendus en réunion :<br><br>
+      ◆ "<strong class="key-word">D</strong>éveloppement durable" → penser à l'avenir, à la planète<br><br>
+      ◆ "<strong class="key-word">I</strong>nnovation" → nouvelles idées, nouveaux outils, amélioration continue<br><br>
+      ◆ "<strong class="key-word">S</strong>atisfaction des clients" → clients heureux = clients fidèles<br><br>
+      ◆ "<strong class="key-word">M</strong>aximisation des profits" → gagner plus qu'on dépense<br><br>
+      <em>→ Ces 4 termes correspondent aux 4 objectifs du rapport.<br>
+      Remets-les dans l'ordre du rapport (A→B→C→D) !</em></div>`},
+    {tab:"💻 TERMINAL — Tableau de bord", content:`<div class="terminal">
+      <div class="t-prompt">> objectifs_entreprise.cfg</div><br>
+      <div class="t-line"><span class="t-key">OBJ_A</span> → <span class="t-val">argent, recettes, survie</span></div>
+      <div class="t-line"><span class="t-key">OBJ_B</span> → <span class="t-val">clients, fidélité, satisfaction</span></div>
+      <div class="t-line"><span class="t-key">OBJ_C</span> → <span class="t-val">nouveauté, créativité, concurrents</span></div>
+      <div class="t-line"><span class="t-key">OBJ_D</span> → <span class="t-val">planète, avenir, responsabilité</span></div><br>
+      <div class="t-warn">> CODE = initiales des 4 objectifs dans l'ordre A→B→C→D</div>
+      <div class="t-warn">> Les noms sont dans le Post-it. Faites correspondre.</div></div>`}
+  ]
+},
+
+// ════ SALLE 6 — DIFFICILE ════
+{
+  id:6, diff:4, diffLabel:"DIFFICILE+",
+  tag:"🗂️ Salle 6 — Bureau RH",
+  title:"L'Organigramme Crypté",
+  desc:"Le bureau RH est fermé. Sur la porte : « Le code = (niveaux hiérarchiques × types de structures × critères de classement), puis ajouter un 0 à la fin. »",
+  lockType:"digits", lockLength:3, lockCode:"360",
+  lockLabel:"CODE À 3 CHIFFRES",
+  lockHint:"Multipliez les 3 valeurs trouvées dans les 3 documents, puis ajoutez un zéro à la fin du résultat.",
+  codesLabel:"360",
+  clues:[
+    {tab:"📄 DOCUMENT 1 — Guide de la hiérarchie", content:`<div class="doc-paper">
+      <div class="doc-title">GUIDE ORGANISATIONNEL — LA HIÉRARCHIE</div>
+      <p>La hiérarchie est l'échelle des responsabilités dans l'entreprise. Elle comporte <strong>3 niveaux</strong> :</p><br>
+      <p><strong>Niveau 1 — Le sommet :</strong> Le PDG ou Directeur. Il prend les décisions stratégiques majeures (ex: valider un gros budget).</p>
+      <p><strong>Niveau 2 — Le milieu :</strong> Les chefs d'équipe ou managers. Ils supervisent leurs équipes et valident les décisions quotidiennes (ex: valider des congés).</p>
+      <p><strong>Niveau 3 — La base :</strong> Les employés qui effectuent le travail au quotidien.</p><br>
+      <p style="font-size:0.72rem;color:#555;font-style:italic;">⚠ Notez bien le nombre de niveaux — c'est le premier facteur du code.</p></div>`},
+    {tab:"📄 DOCUMENT 2 — Types de structures", content:`<div class="doc-paper">
+      <div class="doc-title">NOTE INTERNE — STRUCTURES ORGANISATIONNELLES</div>
+      <p>Il existe plusieurs façons d'organiser une entreprise. Voici les types recensés dans notre référentiel :</p><br>
+      <p><strong>Type 1 — Par Fonction :</strong> Tous les gens du même métier ensemble (un dép. Vente, un dép. Compta, un dép. Accueil...). Excellent pour la spécialisation.</p>
+      <p><strong>Type 2 — Matricielle :</strong> L'employé a deux chefs : son chef de service habituel + un chef de projet temporaire. Favorise la collaboration entre services.</p>
+      <p><strong>Type 3 — Par Projet :</strong> Les équipes sont formées uniquement pour une mission précise, puis se séparent. Très flexible et rapide.</p><br>
+      <p style="font-size:0.72rem;color:#555;font-style:italic;">⚠ Notez bien le nombre de types — c'est le deuxième facteur du code.</p></div>`},
+    {tab:"📄 DOCUMENT 3 — Classement efficace", content:`<div class="doc-paper">
+      <div class="doc-title">RÉFÉRENTIEL QUALITÉ — CRITÈRES D'UN BON CLASSEMENT</div>
+      <p>Un classement est dit <strong>efficace</strong> lorsqu'il respecte <strong>4 critères</strong> fondamentaux :</p><br>
+      <p><strong>Critère 1 — Cohérence :</strong> Les règles s'appliquent partout de la même manière.</p>
+      <p><strong>Critère 2 — Simplicité :</strong> L'organisation est intuitive pour tous les utilisateurs.</p>
+      <p><strong>Critère 3 — Normalisation :</strong> Mêmes titres et codes utilisés par tout le personnel.</p>
+      <p><strong>Critère 4 — Pérennité :</strong> Le système survit aux départs et changements d'équipe.</p><br>
+      <p style="font-size:0.72rem;color:#555;font-style:italic;">⚠ Notez bien le nombre de critères — c'est le troisième facteur du code.</p>
+      <p style="font-family:'Special Elite';font-size:0.9rem;color:#8b0000;">Code = (facteur1 × facteur2 × facteur3) + un 0 à la fin</p></div>`}
+  ]
+},
+
+// ════ SALLE 7 — TRÈS DIFFICILE ════
+{
+  id:7, diff:4, diffLabel:"TRÈS DIFFICILE",
+  tag:"💬 Salle 7 — Salle des Communications",
+  title:"Le Réseau Coupé",
+  desc:"Le système de communication est bloqué. Un message d'erreur clignote : « Pour rétablir le réseau, saisissez le mot qui désigne le type de communication qui circule ENTRE les services dans une structure matricielle. »",
+  lockType:"word", lockCode:"HORIZONTALE",
+  lockLabel:"MOT-CLÉ (EN MAJUSCULES)",
+  lockHint:"Lisez attentivement les documents sur les types de communication selon les structures. La structure matricielle a un type de communication spécifique — trouvez son nom exact.",
+  codesLabel:"HORIZONTALE",
+  clues:[
+    {tab:"📄 MÉMO — Communication par structure", content:`<div class="doc-paper">
+      <div class="doc-title">MÉMO FORMATION — COMMUNICATION & STRUCTURES</div>
+      <p>Chaque type de structure génère un mode de communication dominant :</p><br>
+      <p><strong>Structure par Fonction :</strong><br>
+      L'information monte et descend à l'intérieur de chaque département. Elle suit la ligne hiérarchique avant de passer d'un service à l'autre.<br>
+      <em>Avantage : spécialisation. Inconvénient : lenteur entre départements.</em></p><br>
+      <p><strong>Structure Matricielle :</strong><br>
+      L'information circule directement entre collègues de différents services, grâce aux projets communs. Les échanges ne passent pas par la hiérarchie.<br>
+      <em>Avantage : forte collaboration. Inconvénient : conflit d'autorité (deux chefs).</em></p><br>
+      <p><strong>Structure par Projet :</strong><br>
+      La communication s'adapte aux besoins de la mission. Les équipes se forment et se dissolvent selon les projets.</p><br>
+      <p style="font-size:0.72rem;color:#555;font-style:italic;">⚠ Ce document ne donne pas le nom du type de communication. Cherchez dans les autres documents.</p></div>`},
+    {tab:"🗒️ POST-IT — Schéma des flux", content:`<div class="postit">
+      Aide-mémoire flux d'information :<br><br>
+      📊 Structure par Fonction<br>
+      → Info circule <strong>de haut en bas</strong><br>
+      → Sens = <strong>V_______E</strong> (8 lettres)<br><br>
+      🔗 Structure Matricielle<br>
+      → Info circule <strong>entre services, même niveau</strong><br>
+      → Sens = <strong>H__________E</strong> (11 lettres)<br><br>
+      🎯 Structure par Projet → mixte<br><br>
+      <em>Le code = le mot en H, en MAJUSCULES</em><br>
+      <em>→ Trouve ce mot dans le terminal</em>
+    </div>`},
+    {tab:"💻 TERMINAL — Diagnostic réseau", content:`<div class="terminal">
+      <div class="t-prompt">> diagnostic_reseau.sys</div>
+      <div class="t-line">> ERREUR : mot_de_passe incorrect</div><br>
+      <div class="t-line"><span class="t-key">STRUCTURE</span> = <span class="t-val">"Matricielle"</span></div>
+      <div class="t-line"><span class="t-key">DIRECTION_FLUX</span> = <span class="t-val">"même niveau hiérarchique"</span></div>
+      <div class="t-line"><span class="t-key">SENS</span> = <span class="t-val">"opposé à Vertical"</span></div>
+      <div class="t-line"><span class="t-key">INDICE</span> = <span class="t-val">"comme une ligne d'horizon"</span></div><br>
+      <div class="t-warn">> 11 lettres — commence par H — finit par E</div>
+      <div class="t-warn">> Adjectif qui qualifie ce qui va de gauche à droite</div>
+      <div class="t-warn">> Saisir en MAJUSCULES</div></div>`}
+  ]
+},
+
+// ════ SALLE 8 — DIFFICILE ════
+{
+  id:8, diff:4, diffLabel:"DIFFICILE",
+  tag:"✉️ Salle 8 — Bureau de Correspondance",
+  title:"Le Mail Bloqué",
+  desc:"Le système de messagerie est verrouillé. Un message d'erreur affiche : « Formule de clôture incorrecte détectée. Saisissez le MOT UNIQUE qui désigne le type de formules à NE PAS utiliser dans un mail professionnel. »",
+  lockType:"word", lockCode:"FAMILIER",
+  lockLabel:"MOT-CLÉ (EN MAJUSCULES)",
+  lockHint:"Lisez la charte de communication. Les formules interdites appartiennent toutes à la même catégorie. Trouvez le mot qui les qualifie.",
+  codesLabel:"FAMILIER",
+  clues:[
+    {tab:"📄 CHARTE — Formules professionnelles", content:`<div class="doc-paper">
+      <div class="doc-title">CHARTE DE COMMUNICATION ÉCRITE — BUREAU 404</div>
+      <p>Les formules de politesse montrent le <strong>respect</strong> envers le destinataire, le <strong>professionnalisme</strong> de l'expéditeur et la qualité de la relation.</p><br>
+      <p><strong>✅ Formules de clôture acceptées :</strong><br>
+      Cordialement, — Bien cordialement, — Sincères salutations,<br>
+      Respectueusement, — Bien à vous, — Au plaisir de vous lire,<br>
+      Dans l'attente de votre retour, — Je reste à votre disposition,</p><br>
+      <p><strong>✅ Formules d'ouverture acceptées :</strong><br>
+      Bonjour Madame, — Bonjour Monsieur, — Madame, Monsieur,<br>
+      Je me permets de vous contacter — Pour donner suite à notre échange,</p><br>
+      <p><strong>❌ Formules INTERDITES :</strong><br>
+      Bisous — Amitiés — Je t'embrasse — "Cordialement 😉"<br>
+      "Merci de faire le nécessaire" — "URGENT !!!"</p><br>
+      <p style="font-size:0.72rem;color:#555;font-style:italic;">⚠ Les formules interdites ont toutes quelque chose en commun. Un seul mot les qualifie toutes. Cherchez ce mot dans les autres documents.</p></div>`},
+    {tab:"🗒️ POST-IT — Analyse de la formatrice", content:`<div class="postit">
+      Notes de formation :<br><br>
+      Les formules ❌ sont dites "<strong class="key-word">F_________R</strong>"<br>
+      car elles sont réservées aux proches,<br>
+      aux amis, à la famille.<br><br>
+      Elles ne conviennent pas<br>
+      à la communication professionnelle.<br><br>
+      Exemples : "Bisous", "Amitiés",<br>
+      "Je t'embrasse" → trop proches,<br>
+      trop personnelles.<br><br>
+      <em>→ Le code = ce mot en entier, en majuscules</em>
+    </div>`},
+    {tab:"💻 TERMINAL — Filtre messagerie", content:`<div class="terminal">
+      <div class="t-prompt">> filtre_messagerie.sys</div>
+      <div class="t-line">> MOTIF REJET : formule_type = <span class="t-warn">F_________</span></div><br>
+      <div class="t-line">Exemples bloqués :</div>
+      <div class="t-line"><span class="t-key">MSG_001</span> = <span class="t-val">"Bisous"</span> → <span class="t-warn">REJETÉ</span></div>
+      <div class="t-line"><span class="t-key">MSG_002</span> = <span class="t-val">"Amitiés"</span> → <span class="t-warn">REJETÉ</span></div>
+      <div class="t-line"><span class="t-key">MSG_003</span> = <span class="t-val">"Je t'embrasse"</span> → <span class="t-warn">REJETÉ</span></div>
+      <div class="t-line"><span class="t-key">MSG_004</span> = <span class="t-val">"URGENT !!!"</span> → <span class="t-warn">REJETÉ</span></div><br>
+      <div class="t-warn">> Ces formules partagent un même qualificatif.</div>
+      <div class="t-warn">> Ce qualificatif commence par F, finit par R.</div>
+      <div class="t-warn">> Saisir ce mot en MAJUSCULES pour débloquer.</div></div>`}
+  ]
+},
+
+// ════ SALLE 9 — DIFFICILE ════
+{
+  id:9, diff:4, diffLabel:"DIFFICILE+",
+  tag:"🔧 Salle 9 — Atelier Administratif",
+  title:"Le Moteur Grippé",
+  desc:"La porte de l'atelier est bloquée. Un panneau : « CODE À 6 LETTRES — Extrait des deux services piliers de l'entreprise. Chaque document révèle les positions des lettres à prélever. Assemblez-les dans l'ordre. »",
+  lockType:"word", lockCode:"ADMACI",
+  lockLabel:"CODE 6 LETTRES (MAJUSCULES)",
+  lockHint:"Trouvez les deux noms de services dans les documents. Chaque document indique quelles lettres prendre et dans quel ordre les assembler.",
+  codesLabel:"ADMACI",
+  clues:[
+    {tab:"📄 MANUEL INTERNE — Rôles essentiels", content:`<div class="doc-paper">
+      <div class="doc-title">MANUEL INTERNE — FONCTIONS CLÉS DE L'ENTREPRISE</div>
+      <p>L'entreprise repose sur deux fonctions transversales qui assurent la fluidité de l'information :</p><br>
+      <p><strong>Fonction 1 — "L'huile du moteur" :</strong> Ce service s'occupe de tous les papiers et échanges internes — courriers, emails, dossiers. Sans lui, tout se grippe. Il organise, classe et assure que les opérations quotidiennes se déroulent sans blocage.<br>
+      <em>Ce service porte un nom de <strong>14 lettres</strong>.</em></p><br>
+      <p><strong>Fonction 2 — "La vitrine" :</strong> Ce service est le premier contact de l'entreprise avec l'extérieur. Il donne le ton et l'image de l'entreprise à tous les visiteurs et clients.<br>
+      <em>Ce service porte un nom de <strong>7 lettres</strong>.</em></p><br>
+      <p><strong>Construction du code :</strong> Le code est formé de <strong>3 lettres du premier service</strong> suivies de <strong>3 lettres du second service</strong>.<br>
+      Les positions exactes à prélever sont indiquées dans les autres documents.</p><br>
+      <p style="font-size:0.72rem;color:#555;font-style:italic;">⚠ Les noms de ces services ne sont pas donnés ici — trouvez-les dans le post-it et le terminal.</p>
+      <div class="stamp">INTERNE</div></div>`},
+    {tab:"🗒️ POST-IT — Extraction des lettres", content:`<div class="postit">
+      Pour construire le code :<br><br>
+      <strong>Service 1</strong> — 14 lettres<br>
+      → "huile du moteur"<br>
+      Prendre les lettres aux positions :<br>
+      <strong class="key-word">1 · 2 · 3</strong><br><br>
+      <strong>Service 2</strong> — 7 lettres<br>
+      → "vitrine de l'entreprise"<br>
+      Prendre les lettres aux positions :<br>
+      <strong class="key-word">1 · 3 · 6</strong><br><br>
+      <em>Code = (3 lettres service 1)</em><br>
+      <em>    + (3 lettres service 2)</em><br>
+      <em>En MAJUSCULES, sans espace.</em><br><br>
+      <em>→ Les mots sont dans le terminal.</em>
+    </div>`},
+    {tab:"💻 TERMINAL — Annuaire services", content:`<div class="terminal">
+      <div class="t-prompt">> annuaire_services.db</div><br>
+      <div class="t-line"><span class="t-key">SERVICE_1</span> — "huile du moteur"</div>
+      <div class="t-line"><span class="t-warn">  NOM    : A-D-M-I-N-I-S-T-R-A-T-I-F</span></div>
+      <div class="t-line"><span class="t-warn">  POSIT. : 1-2-3-4-5-6-7-8-9-10-11-12-13-14</span></div>
+      <div class="t-line"><span class="t-warn">  RÔLE   : gestion docs internes, courriers</span></div><br>
+      <div class="t-line"><span class="t-key">SERVICE_2</span> — "vitrine"</div>
+      <div class="t-line"><span class="t-warn">  NOM    : A-C-C-U-E-I-L</span></div>
+      <div class="t-line"><span class="t-warn">  POSIT. : 1-2-3-4-5-6-7</span></div>
+      <div class="t-line"><span class="t-warn">  RÔLE   : premier contact, image entreprise</span></div><br>
+      <div class="t-val">> Positions à prélever : voir le post-it.</div>
+      <div class="t-warn">> Résultat attendu : 6 lettres, MAJUSCULES</div></div>`}
+  ]
+},
+
+// ════ SALLE 10 — TRÈS DIFFICILE ════
+{
+  id:10, diff:4, diffLabel:"TRÈS DIFFICILE",
+  tag:"🗃️ Salle 10 — Salle des Archives Numériques",
+  title:"L'Arborescence Perdue",
+  desc:"Le serveur est verrouillé. Un message système clignote : « Accès refusé. Saisissez le nom du principe qui garantit que l'organisation physique et numérique des documents est IDENTIQUE. »",
+  lockType:"word", lockCode:"MIROIR",
+  lockLabel:"MOT-CLÉ (EN MAJUSCULES)",
+  lockHint:"Le guide de classement décrit un principe fondamental qui lie le classement papier et le classement électronique. Ce principe porte un nom imagé. Trouvez-le.",
+  codesLabel:"MIROIR",
+  clues:[
+    {tab:"📄 GUIDE CLASSEMENT — Coordination", content:`<div class="doc-paper">
+      <div class="doc-title">GUIDE CLASSEMENT AVANCÉ — SECTION 4.2</div>
+      <p><strong>Coordonner le classement papier et le classement électronique</strong></p><br>
+      <p>L'organisation doit être <strong>identique</strong> sur le serveur informatique et dans les armoires physiques. Ce principe fondamental s'appelle le <strong>Principe du ___________</strong>.</p><br>
+      <p>Concrètement : si votre pochette physique contient "Contrats", "Courriers" et "Factures", l'arborescence numérique doit présenter exactement ces trois mêmes sous-dossiers.</p><br>
+      <p>L'objectif est d'<strong>éliminer l'hésitation</strong> : si je sais où est le papier, je sais automatiquement où est le fichier numérique.</p><br>
+      <p>L'arborescence doit suivre des niveaux logiques :<br>
+      <em>N1 : Service → N2 : Client/Thème → N3 : Contenu/Année</em></p><br>
+      <p style="font-size:0.72rem;color:#555;font-style:italic;">⚠ Le nom du principe est masqué. Cherchez dans les autres documents.</p>
+      <div class="stamp">RÉFÉRENTIEL</div></div>`},
+    {tab:"🗒️ POST-IT — Aide-mémoire numérique", content:`<div class="postit">
+      Règle d'or du classement :<br><br>
+      Papier = Numérique<br>
+      → même structure<br>
+      → mêmes noms de dossiers<br>
+      → même logique<br><br>
+      Ce principe s'appelle :<br>
+      "<strong class="key-word">Principe du M_____R</strong>"<br><br>
+      Comme un objet reflété dans une glace :<br>
+      l'image numérique est le reflet exact<br>
+      de l'organisation physique.<br><br>
+      <em>→ Le code = ce mot, en majuscules</em>
+    </div>`},
+    {tab:"💻 TERMINAL — Audit arborescence", content:`<div class="terminal">
+      <div class="t-prompt">> audit_arborescence.exe</div><br>
+      <div class="t-line">ARMOIRE PHYSIQUE :</div>
+      <div class="t-line"><span class="t-key">📁 Clients/</span></div>
+      <div class="t-line">  <span class="t-val">├── Contrats/</span></div>
+      <div class="t-line">  <span class="t-val">├── Courriers/</span></div>
+      <div class="t-line">  <span class="t-val">└── Factures_2025/</span></div><br>
+      <div class="t-line">SERVEUR NUMÉRIQUE :</div>
+      <div class="t-line"><span class="t-key">📁 Clients/</span></div>
+      <div class="t-line">  <span class="t-val">├── Contrats/</span></div>
+      <div class="t-line">  <span class="t-val">├── Courriers/</span></div>
+      <div class="t-line">  <span class="t-val">└── Factures_2025/</span></div><br>
+      <div class="t-val">> STATUT : Principe du M_____ respecté ✓</div>
+      <div class="t-warn">> Mot de passe = nom de ce principe (5 lettres)</div></div>`}
+  ]
+},
+
+// ════ SALLE 11 — BOSS FINAL ════
+{
+  id:11, diff:5, diffLabel:"BOSS FINAL",
+  tag:"🔱 Salle 11 — Coffre-Fort Principal",
+  title:"Le Code Maître",
+  desc:"Le coffre central est scellé. Aucune instruction. Sur la porte, une seule phrase gravée dans le métal : <em>« Ce que tu comptes, ce que tu nommes, ce que tu entends, ce que tu traverses — tout est là. »</em>",
+  lockType:"word", lockCode:"4M36AC",
+  lockLabel:"CODE MAÎTRE — CHIFFRES ET LETTRES",
+  lockHint:"Le code mêle chiffres et lettres. Chaque indice est une devinette qui renvoie à une notion vue dans une salle précédente. Aucun guide. Seule ta mémoire.",
+  codesLabel:"4M36AC",
+  clues:[
+    {tab:"📜 TESTAMENT — La Lettre de M. Fontaine", content:`<div class="doc-paper">
+      <div class="doc-title">TESTAMENT PROFESSIONNEL — DIRECTEUR FONTAINE</div>
+      <p style="font-style:italic;color:#555;">Trouvé scellé derrière le tableau de la direction. Encre vieillie. Certains mots ont été volontairement effacés.</p><br>
+      <p>« Si vous lisez ceci, c'est que vous avez prouvé votre valeur. Le coffre s'ouvre avec six caractères — ni tous des chiffres, ni tous des lettres. Voici mes six dernières énigmes. »</p><br>
+      <p><strong>I.</strong> <em>« Je suis le nombre de gardiens qui veillent sur un bon classement. Quatre vertus, pas une de plus, pas une de moins. »</em><br>
+      → <span style="font-family:'Special Elite';color:#8b0000;">Premier caractère du code.</span></p><br>
+      <p><strong>II.</strong> <em>« Je suis la première lettre du principe qui unit le papier et l'écran — celui qui dit que les deux doivent se faire face comme dans un reflet. »</em><br>
+      → <span style="font-family:'Special Elite';color:#8b0000;">Deuxième caractère du code.</span></p><br>
+      <p><strong>III.</strong> <em>« Je suis le nombre d'échelons que gravit l'information dans la grande tour : du simple employé jusqu'au sommet, en passant par ceux du milieu. »</em><br>
+      → <span style="font-family:'Special Elite';color:#8b0000;">Troisième caractère du code.</span></p><br>
+      <p style="font-size:0.72rem;color:#555;font-style:italic;">⚠ Les trois caractères suivants se trouvent dans les autres documents de cette salle.</p>
+      <div class="stamp">TESTAMENT</div></div>`},
+    {tab:"🗒️ POST-IT — Trois dernières énigmes", content:`<div class="postit">
+      Notes griffonnées au dos d'une enveloppe :<br><br>
+      <strong>IV.</strong><br>
+      <em>"Le voyage du courrier commence<br>
+      et se termine — compte ses stations.<br>
+      De la main du facteur jusqu'à l'armoire.<br>
+      Combien de haltes ?"</em><br>
+      → <strong class="key-word">4ème caractère</strong><br><br>
+      <strong>V.</strong><br>
+      <em>"Parmi les cinq façons d'ordonner<br>
+      les dossiers, laquelle vient en premier<br>
+      dans l'ordre que j'ai enseigné ?<br>
+      Donne-moi son initiale."</em><br>
+      → <strong class="key-word">5ème caractère</strong><br><br>
+      <strong>VI.</strong><br>
+      <em>"La méthode en quatre temps<br>
+      pour décrocher le téléphone.<br>
+      Son premier mot commence<br>
+      par la lettre que tu cherches."</em><br>
+      → <strong class="key-word">6ème caractère</strong>
+    </div>`},
+    {tab:"💻 TERMINAL — Message chiffré", content:`<div class="terminal">
+      <div class="t-prompt">> coffre_fontaine.enc</div>
+      <div class="t-line">> DÉCHIFFRAGE EN COURS...</div><br>
+      <div class="t-line"><span class="t-key">STRUCTURE DU CODE</span> : _ _ _ _ _ _</div>
+      <div class="t-line"><span class="t-warn">  pos.1 → NOMBRE</span></div>
+      <div class="t-line"><span class="t-warn">  pos.2 → LETTRE MAJUSCULE</span></div>
+      <div class="t-line"><span class="t-warn">  pos.3 → NOMBRE</span></div>
+      <div class="t-line"><span class="t-warn">  pos.4 → NOMBRE</span></div>
+      <div class="t-line"><span class="t-warn">  pos.5 → LETTRE MAJUSCULE</span></div>
+      <div class="t-line"><span class="t-warn">  pos.6 → LETTRE MAJUSCULE</span></div><br>
+      <div class="t-line"><span class="t-key">INDICE SYSTÈME</span> :</div>
+      <div class="t-line"><span class="t-val">  "Le 2ème caractère est la majuscule</span></div>
+      <div class="t-line"><span class="t-val">   d'un principe en 6 lettres.</span></div>
+      <div class="t-line"><span class="t-val">   Il commence comme le mot 'miroir'."</span></div><br>
+      <div class="t-line"><span class="t-key">AVERTISSEMENT</span> :</div>
+      <div class="t-line"><span class="t-warn">  3 tentatives. Après : effacement total.</span></div>
+      <div class="t-line"><span class="t-warn">  Aucun guide. Aucune aide extérieure.</span></div>
+      <div class="t-warn">> Ce que tu comptes, ce que tu nommes,</div>
+      <div class="t-warn">> ce que tu entends, ce que tu traverses.</div>
+      <div class="t-warn">> Tout est là.</div></div>`}
+  ]
+}
+
+]; // FIN ROOMS
+
+// ══ ÉTAT ══
+let currentRoom=0,totalTries=0,codesFound=0,foundCodes=[],startTime=null,timerInt=null,score=2000;
+let attemptsLeft=new Array(ROOMS.length).fill(3);
+let playerName='Agent inconnu';
+// Erreurs par salle : tableau de {salle, tentativesFaites, réussi}
+let roomStats=ROOMS.map(r=>({id:r.id,tag:r.tag,tries:0,success:false,revealed:false}));
+
+// ══ URL GOOGLE SHEETS — À REMPLACER ══
+const SHEETS_URL = "https://script.google.com/macros/s/AKfycbzcjqs8-by3StS-PqRPKUTQPxw-cnS7LHXh7cv0bHWvhFhxAJ7e78h7IAoFH8svQxjOJQ/exec";
+
+// ══ INTRO ══
+const introMsg=["Initialisation du système...","Connexion aux archives sécurisées...","11 salles verrouillées détectées...","Durée estimée : 40-50 minutes...","Bienvenue, Agent."];
+function typeIntro(){let mi=0,ci=0;const el=document.getElementById('typing-text');function t(){if(mi>=introMsg.length)return;if(ci<introMsg[mi].length){el.textContent=introMsg[mi].substring(0,++ci)+'█';setTimeout(t,35);}else{el.textContent=introMsg[mi]+' ✓';mi++;ci=0;setTimeout(t,500);}}t();}
+window.onload=()=>{typeIntro();};
+
+// ══ DÉMARRAGE ══
+function startGame(){
+  const nameInput=document.getElementById('player-name');
+  const name=(nameInput?nameInput.value.trim():'');
+  if(!name){
+    if(nameInput){nameInput.style.borderColor='#e74c3c';nameInput.placeholder='⚠ Entrez votre prénom et nom !';}
+    return;
+  }
+  playerName=name;
+  if(!audioCtx)initAudio();
+  playSfxClick();
+  document.getElementById('intro').style.display='none';
+  document.getElementById('hud').style.display='flex';
+  document.getElementById('game').style.display='block';
+  startTime=Date.now();
+  timerInt=setInterval(updateTimer,1000);
+  buildHUD();renderRoom(0);
+}
+
+// ══ TIMER ══
+function updateTimer(){const s=Math.floor((Date.now()-startTime)/1000),m=Math.floor(s/60).toString().padStart(2,'0'),sec=(s%60).toString().padStart(2,'0');document.getElementById('hud-timer').textContent=`⏱ ${m}:${sec}`;}
+function getElapsed(){const s=Math.floor((Date.now()-startTime)/1000);return`${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;}
+
+// ══ HUD ══
+function buildHUD(){const c=document.getElementById('hud-rooms');c.innerHTML='';ROOMS.forEach((r,i)=>{const d=document.createElement('div');d.className='hud-room';d.id=`hroom-${i}`;d.textContent=(i+1);c.appendChild(d);});updateHUD();}
+function updateHUD(){ROOMS.forEach((r,i)=>{const d=document.getElementById(`hroom-${i}`);if(!d)return;d.className='hud-room';if(i<currentRoom)d.classList.add('done');else if(i===currentRoom)d.classList.add('current');});document.getElementById('hud-codes-count').textContent=codesFound;}
+
+// ══ RENDU SALLE ══
+function renderRoom(idx){
+  const game=document.getElementById('game');
+  const old=document.getElementById(`room-${idx-1}`);
+  if(old){old.style.opacity='0.3';old.style.pointerEvents='none';}
+  const r=ROOMS[idx];
+  const el=document.createElement('div');
+  el.className='room active';el.id=`room-${idx}`;
+  let dotsHTML='';for(let i=0;i<3;i++)dotsHTML+=`<div class="attempt-dot" id="dot-${idx}-${i}"></div>`;
+  let lockHTML='';
+  if(r.lockType==='digits'){let digs='';for(let i=0;i<r.lockLength;i++)digs+=`<input class="digit-box" id="dig-${idx}-${i}" maxlength="1" type="text" inputmode="numeric" onkeydown="handleDigitKey(event,${idx},${i})" oninput="handleDigitInput(event,${idx},${i})">`;lockHTML=`<span class="code-label">${r.lockLabel}</span><div class="code-digits">${digs}</div>`;}
+  else lockHTML=`<span class="code-label">${r.lockLabel}</span><input class="text-code-input" id="tinput-${idx}" type="text" placeholder="SAISIR LE CODE..." maxlength="12" onkeyup="handleTextInput(event,${idx})" oninput="playSfxKeyboard()">`;
+  let cluesHTML='';r.clues.forEach((c,ci)=>{cluesHTML+=`<div class="clue-envelope"><div class="clue-tab" id="ctab-${idx}-${ci}" onclick="toggleClue(${idx},${ci})"><span>${c.tab}</span><span class="arrow">▶</span></div><div class="clue-content" id="ccontent-${idx}-${ci}">${c.content}</div></div>`;});
+  const diffColors={1:'diff-1',2:'diff-1',3:'diff-3',4:'diff-4',5:'diff-5'};
+  el.innerHTML=`
+    <div class="room-header">
+      <div class="room-num">${r.id < 10 ? '0'+r.id : r.id}</div>
+      <div>
+        <div class="room-tag">${r.tag}</div>
+        <div class="diff-badge ${diffColors[r.diff]||'diff-3'}">⚡ ${r.diffLabel}</div>
+        <div class="room-title">${r.title}</div>
+        <div class="room-desc">${r.desc}</div>
+      </div>
+    </div>
+    <div class="room-layout">
+      <div class="clue-area">${cluesHTML}</div>
+      <div class="lock-panel">
+        <div class="lock-title">🔐 CADENAS</div>
+        <div class="lock-hint">${r.lockHint}</div>
+        <div class="lock-visual" id="lv-${idx}">🔒</div>
+        <div class="attempts-display">${dotsHTML}</div>
+        ${lockHTML}
+        <button class="btn-unlock" onclick="checkCode(${idx})">⚡ DÉVERROUILLER</button>
+        <div class="lock-feedback" id="lfeedback-${idx}"></div>
+        <button class="btn-next-room" id="bnext-${idx}" onclick="nextRoom(${idx})">
+          ${idx<ROOMS.length-1?'→ SALLE SUIVANTE':'→ TERMINER LA MISSION'}
+        </button>
+      </div>
+    </div>`;
+  game.appendChild(el);
+  setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),100);
+  updateHUD();
+}
+
+// ══ INDICES ══
+function toggleClue(ri,ci){const tab=document.getElementById(`ctab-${ri}-${ci}`),content=document.getElementById(`ccontent-${ri}-${ci}`),isOpen=tab.classList.contains('open');tab.classList.toggle('open',!isOpen);content.classList.toggle('open',!isOpen);if(!isOpen)playSfxPageTurn();}
+
+// ══ INPUTS ══
+function handleDigitInput(e,ri,di){const val=e.target.value.replace(/\D/g,'');e.target.value=val.slice(-1);if(val){const n=document.getElementById(`dig-${ri}-${di+1}`);if(n)n.focus();}}
+function handleDigitKey(e,ri,di){if(e.key==='Backspace'){const c=document.getElementById(`dig-${ri}-${di}`);if(!c.value&&di>0)document.getElementById(`dig-${ri}-${di-1}`).focus();}if(e.key==='Enter')checkCode(ri);playSfxKeyboard();}
+function handleTextInput(e,ri){if(e.key==='Enter')checkCode(ri);}
+
+// ══ VÉRIFICATION ══
+function checkCode(ri){
+  const r=ROOMS[ri],fb=document.getElementById(`lfeedback-${ri}`);
+  if(attemptsLeft[ri]<=0)return;
+  let input='';
+  if(r.lockType==='digits'){for(let i=0;i<r.lockLength;i++){const d=document.getElementById(`dig-${ri}-${i}`);input+=(d?d.value:'');}}
+  else{const t=document.getElementById(`tinput-${ri}`);input=t?t.value.trim().toUpperCase():'';}
+  totalTries++;
+  roomStats[ri].tries++;
+  if(input===r.lockCode){
+    codesFound++;foundCodes[ri]=r.codesLabel;playSfxUnlock();
+    roomStats[ri].success=true;
+    document.getElementById(`lv-${ri}`).textContent='🔓';
+    document.getElementById(`lv-${ri}`).style.animation='unlock-bounce 0.5s ease';
+    if(r.lockType==='digits'){for(let i=0;i<r.lockLength;i++){const d=document.getElementById(`dig-${ri}-${i}`);if(d){d.classList.add('correct-digit');d.disabled=true;}}}
+    else{const t=document.getElementById(`tinput-${ri}`);if(t){t.style.borderColor='var(--green)';t.style.color='var(--green)';t.disabled=true;}}
+    fb.className='lock-feedback show ok';
+    fb.innerHTML=`✅ ACCÈS AUTORISÉ<br><small>Code : <strong>${r.codesLabel}</strong> — Bravo !</small>`;
+    document.getElementById(`bnext-${ri}`).classList.add('show');
+    document.querySelector(`[onclick="checkCode(${ri})"]`).disabled=true;
+    updateHUD();showToast(`🔓 Salle ${ri+1} déverrouillée !`);
+  } else {
+    attemptsLeft[ri]--;playSfxError();
+    const dotIdx=3-attemptsLeft[ri]-1;
+    const dot=document.getElementById(`dot-${ri}-${dotIdx}`);if(dot)dot.classList.add('used');
+    if(r.lockType==='digits'){for(let i=0;i<r.lockLength;i++){const d=document.getElementById(`dig-${ri}-${i}`);if(d){d.classList.add('wrong-digit');setTimeout(()=>d.classList.remove('wrong-digit'),400);}}}
+    score-=50;
+    if(attemptsLeft[ri]===0){
+      fb.className='lock-feedback show ko';
+      fb.innerHTML=`❌ TROP DE TENTATIVES<br><small>Code révélé : <strong>${r.lockCode}</strong><br>Relisez les indices !</small>`;
+      document.getElementById(`bnext-${ri}`).classList.add('show');
+      document.querySelector(`[onclick="checkCode(${ri})"]`).disabled=true;
+      foundCodes[ri]=r.lockCode+' (révélé)';
+      roomStats[ri].revealed=true;
+    } else {
+      fb.className='lock-feedback show ko';
+      fb.innerHTML=`❌ INCORRECT — ${attemptsLeft[ri]} tentative(s) restante(s)<br><small>Relisez attentivement…</small>`;
+    }
+  }
+  fb.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ══ NAVIGATION ══
+function nextRoom(idx){playSfxClick();currentRoom=idx+1;if(currentRoom>=ROOMS.length)endGame();else{renderRoom(currentRoom);updateHUD();startRoomAmbiance(currentRoom);}}
+
+// ══ FIN ══
+function endGame(){
+  clearInterval(timerInt);playSfxWin();
+  document.getElementById('hud').style.display='none';
+  document.getElementById('game').style.display='none';
+  const elapsed=getElapsed();
+  const finalScore=Math.max(0,score);
+
+  // Récap salle par salle
+  const list=document.getElementById('win-codes-list');
+  list.innerHTML='';
+  ROOMS.forEach((r,i)=>{
+    const st=roomStats[i];
+    let icon='❌', color='#e74c3c', note='Échec (code révélé)';
+    if(st.success && st.tries===1){icon='⭐';color='#f1c40f';note='Parfait du premier coup !';}
+    else if(st.success && st.tries===2){icon='✅';color='#27ae60';note='Réussi en 2 essais';}
+    else if(st.success && st.tries===3){icon='✅';color='#f39c12';note='Réussi en 3 essais';}
+    else if(!st.success){icon='❌';color='#e74c3c';note=`Échec — code révélé`;}
+    list.innerHTML+=`<div class="code-row">
+      <span class="cr-name">${r.tag}</span>
+      <span style="color:${color};font-size:0.9rem;">${icon} ${note} (${st.tries} tentative${st.tries>1?'s':''})</span>
+    </div>`;
+  });
+
+  document.getElementById('ws-time').textContent=elapsed;
+  document.getElementById('ws-tries').textContent=totalTries;
+  document.getElementById('ws-score').textContent=finalScore;
+  document.getElementById('win').classList.add('show');
+
+  // Envoi vers Google Sheets
+  sendResultsToSheets(elapsed, finalScore);
+}
+
+function sendResultsToSheets(elapsed, finalScore){
+  if(!SHEETS_URL || SHEETS_URL==='COLLER_ICI_VOTRE_URL_APPS_SCRIPT') return;
+  const payload={
+    apprenant: playerName,
+    date: new Date().toLocaleString('fr-FR'),
+    temps: elapsed,
+    score: finalScore,
+    total_tentatives: totalTries,
+    salles: ROOMS.map((r,i)=>{
+      const st=roomStats[i];
+      return {
+        salle: r.id,
+        nom: r.tag,
+        tentatives: st.tries,
+        reussi: st.success ? 'OUI' : 'NON',
+        revele: st.revealed ? 'OUI' : 'NON'
+      };
+    })
+  };
+  fetch(SHEETS_URL,{
+    method:'POST',
+    mode:'no-cors',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload)
+  }).catch(()=>{});
+}
+
+// ══ TOAST ══
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+</script>
+</body>
+</html>
